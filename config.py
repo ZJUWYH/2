@@ -18,32 +18,21 @@ from transformers import get_linear_schedule_with_warmup
 
 class CFG:
     seed=42
-    input_dim=11
-    num_worker=4
-    hidden_size=32
-    batch_size=1
+    input_dim=3
+    input_feature=18
+    num_workers=2
+    hidden_size=64
+    batch_size=2048
     num_classes=1
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     optimizer="Adam"
-    lr=1e-3
-    epoches=20
-    kernel = True
+    scheduler="ExponentialLR"
+    lr=1e-1
+    epoches=10000
+    kernel=True
+    print_training_process=True
+    sc_Gamma=0.998#指数型学习率衰减曲线
+    decay = 1e-5
 
-import random
-def seed_everything(seed):
-    """
-    Seeds basic parameters for reproductibility of results.
 
-    Args:
-        seed (int): Number of the seed.
-    """
-    random.seed(seed)
-    os.environ["PYTHONHASHSEED"] = str(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-import torch.nn as nn
-
-seed_everything(CFG.seed)
+#seed_everything(CFG.seed)
