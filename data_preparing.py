@@ -16,7 +16,9 @@ import numpy as np
 from torch.utils.data import DataLoader
 from transformers import get_linear_schedule_with_warmup
 from utilities import *
+# from utilities import fusion_tG
 from config import *
+from sklearn.cluster import KMeans
 
 
 class AircraftDataset(Dataset):
@@ -28,8 +30,8 @@ class AircraftDataset(Dataset):
 
     def __getitem__(self, idx):
         data = {}
-        sensor = ['T24','T30','T50','P30','Nf','Nc','Ps30',
-                      'phi','NRf','NRc','BPR','htBleed','W31','W32']
+        sensor = ['T24', 'T30', 'T50', 'P30', 'Nf', 'Nc', 'Ps30',
+                  'phi', 'NRf', 'NRc', 'BPR', 'htBleed', 'W31', 'W32']
         multi_sensor = []
         for sensor_name in sensor:
             multi_sensor.append(np.array(self.df[sensor_name].values.tolist()[idx]))
@@ -41,6 +43,7 @@ class AircraftDataset(Dataset):
         data["timeseries"] = torch.tensor(np.array(self.df["Time"].values.tolist()[idx])[:, None], dtype=torch.int64)
 
         return data
+
 
 class TrainingFeature(Dataset):
     def __init__(self, G, dev_G, dev2_G, Tal0):
@@ -81,11 +84,12 @@ class TrainingFeature(Dataset):
 
 
 class TestingFeature(Dataset):
-    def __init__(self, tG, dev_tG, dev2_tG, RUL):
+    def __init__(self, tG, dev_tG, dev2_tG, RUL, classifier):  # ,labels):
         self.tG = tG
         self.dev_tG = dev_tG
         self.dev2_tG = dev2_tG
         self.RUL = RUL
+        self.classifier = classifier
         self.prepare_data()
 
     def prepare_data(self):
@@ -95,8 +99,10 @@ class TestingFeature(Dataset):
                                       self.dev_tG[unit],
                                       self.dev2_tG[unit]]).reshape(-1)
             input_features.append(feature_unit)
-
         self.input = np.array(input_features)
+        self.labels = self.classifier.predict(self.input)
+
+        # self.labels=labels
 
     def __len__(self):
         return len(self.input)
@@ -104,8 +110,40 @@ class TestingFeature(Dataset):
     def __getitem__(self, idx):
         data = {
             "input": torch.tensor(self.input[idx], dtype=torch.float),
-            "RUL": torch.tensor(self.RUL[idx], dtype=torch.int64)
+            "RUL": torch.tensor(self.RUL[idx], dtype=torch.int64),
+            "label": torch.tensor(self.labels[idx], dtype=torch.int64)
         }
 
         return data
 
+
+class Classified_mean_test_features(TestingFeature):
+    def __init__(self, tG, dev_tG, dev2_tG, RUL, classifier_in):  # classifier_in为训练好的一个分类器
+        super().__init__(tG, dev_tG, dev2_tG, RUL, classifier_in)
+
+    def __len__(self):
+        return CFG.num_in_feature_classes
+
+    def __getitem__(self, idx):
+        data = {
+            "input": torch.tensor(np.mean(self.input[np.where(self.labels == idx)], axis=0), dtype=torch.float),
+            "label": torch.tensor(idx, dtype=torch.int64)
+        }
+        return data
+
+
+class Classified_mean_train_features(TrainingFeature):
+    def __init__(self, G, dev_G, dev2_G, Tal0, classifier):
+        super().__init__(G, dev_G, dev2_G, Tal0)
+        self.classifier = classifier
+        self.labels = self.classifier.predict(self.input)
+
+    def __len__(self):
+        return CFG.num_in_feature_classes
+
+    def __getitem__(self, idx):
+        data = {
+            "input": torch.tensor(np.mean(self.input[np.where(self.labels == idx)], axis=0), dtype=torch.float),
+            "label": torch.tensor(idx, dtype=torch.int64)
+        }
+        return data

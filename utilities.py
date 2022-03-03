@@ -82,3 +82,13 @@ def worker_init_fn(worker_id):
         worker_id (int): Id of the worker.
     """
     np.random.seed(np.random.get_state()[1][0] + worker_id)
+
+
+def fusion_tG(tG, dev_tG, dev2_tG):
+    input_features = []
+    for unit in range(len(tG)):
+        feature_unit = np.vstack([tG[unit],
+                                  dev_tG[unit],
+                                  dev2_tG[unit]]).reshape(-1)
+        input_features.append(feature_unit)
+    return np.array(input_features)

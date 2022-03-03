@@ -93,8 +93,11 @@ class myscheduler():
     def __init__(self,optimizer,decay):
         self.optimizer = optimizer
         self.decay = decay      #学习率衰减值
-    def step(self,loss):
-        lr=self.decay*loss.item()
+    def step(self,loss,last_loss):
+        if loss.item()>last_loss.item():
+            lr=self.decay*last_loss.item()*0.9
+        else:
+            lr=self.decay*loss.item()
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = lr
 

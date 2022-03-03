@@ -33,6 +33,7 @@ class CFG:
     print_training_process=True
     sc_Gamma=0.998#指数型学习率衰减曲线
     decay = 1e-5
+    num_in_feature_classes = 3
 
 
 #seed_everything(CFG.seed)
