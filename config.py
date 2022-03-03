@@ -31,7 +31,7 @@ class CFG:
     epoches=10000
     kernel=True
     print_training_process=True
-    sc_Gamma=0.998#指数型学习率衰减曲线
+    sc_Gamma=0.997#指数型学习率衰减曲线
     decay = 1e-5
     num_in_feature_classes = 3
 

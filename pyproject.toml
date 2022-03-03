@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "wyh-2"
+version = "0.1.0"
+description = ""
+authors = ["nsigma <wz906234737@163.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+matplotlib = "^3.3.4"
+pandas = "^1.2.4"
+scikit_learn = "^1.0.2"
+seaborn = "^0.11.1"
+tqdm = "^4.59.0"
+transformers = "^4.16.2"
+torch = {path = "../torch-1.10.2+cu113-cp39-cp39-win_amd64.whl"}
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
