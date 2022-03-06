@@ -27,13 +27,15 @@ class CFG:
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     optimizer="Adam"
     scheduler="ExponentialLR"
-    lr=1e-1
+    lr= 1e-1
     epoches=10000
     kernel=True
     print_training_process=True
-    sc_Gamma=0.998#指数型学习率衰减曲线
+    sc_Gamma=0.999#指数型学习率衰减曲线
     decay = 1e-5
     num_in_feature_classes = 3
+    warmup_prop=0.1
+    jump_out_value=64
 
 
 #seed_everything(CFG.seed)
