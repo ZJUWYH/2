@@ -17,7 +17,7 @@ classifier_his= KMeans(n_clusters=CFG.num_in_feature_classes,
                        random_state=CFG.seed).fit(TrainingFeature(G, dev_G, dev2_G, Tal0).input)
 
 # Initialize the model
-model = CustomModel().to(device)
+model = CustomModel(CFG.input_feature).to(device)
 for layer in model.modules():
     if isinstance(layer, nn.Linear):
         nn.init.xavier_uniform_(layer.weight.data, gain=nn.init.calculate_gain('relu'))
@@ -117,11 +117,11 @@ def fit_his_unit_in_unit_0(train_loader, test_loader_batch, in_unit_index, RESUM
             target_batch = data["RUL"].unsqueeze(-1).to(device)
             train_data = data["input"].to(device)
             test_data = test_loader_batch["input"].to(device)
-        loss = loss_function(pred_batch, target_batch, train_data, test_data)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        scheduler.step()
+            loss = loss_function(pred_batch, target_batch, train_data, test_data)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            scheduler.step()
         # scheduler.step(loss,last_loss)
         last_loss = loss
         if CFG.print_training_process and epoch % 100 == 0:
@@ -176,11 +176,11 @@ def fit_his_unit_in_unit_classified(train_loader, test_loader_classified_batch, 
             target_batch = data["RUL"].unsqueeze(-1).to(device)
             train_data = data["input"].to(device)
             test_data = test_loader_classified_batch["input"].to(device)
-        loss = loss_function(pred_batch, target_batch, train_data, test_data)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        scheduler.step()
+            loss = loss_function(pred_batch, target_batch, train_data, test_data)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            scheduler.step()
         # scheduler.step(loss,last_loss)
         last_loss = loss
         if CFG.print_training_process and epoch % 100 == 0:
@@ -234,11 +234,11 @@ def fit_his_unit_classified(train_loader, train_loader_classified_batch, labels_
             target_batch = data["RUL"].unsqueeze(-1).to(device)
             train_data = data["input"].to(device)
             test_data = train_loader_classified_batch["input"].to(device)
-        loss = loss_function(pred_batch, target_batch, train_data, test_data)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        scheduler.step()
+            loss = loss_function(pred_batch, target_batch, train_data, test_data)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            scheduler.step()
         # scheduler.step(loss,last_loss)
         last_loss = loss
         if CFG.print_training_process and epoch % 100 == 0:
@@ -285,12 +285,12 @@ def fit_his_unit(train_loader,RESUME=False):
         for data in train_loader:
             pred_batch = model(data["input"].to(device))
             target_batch = data["RUL"].unsqueeze(-1).to(device)
-        loss = F.mse_loss(pred_batch, target_batch.float())
+            loss = F.mse_loss(pred_batch, target_batch.float())
         # loss = loss_function(pred_batch, target_batch, train_data, test_data)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        scheduler.step()
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            scheduler.step()
         # scheduler.step(loss,last_loss)
         # last_loss = loss
         if CFG.print_training_process and epoch % 100 == 0:

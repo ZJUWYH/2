@@ -22,20 +22,22 @@ from config import *
 from data_preparing import *
 
 class CustomModel(nn.Module):
-    def __init__(self):
+    def __init__(self,num_feature=CFG.input_feature,num_hidden=CFG.hidden_size):
         super(CustomModel, self).__init__()
         #         self.cfg=cfg
         #         self.input_dim=cfg.input_dim
         #         self.hidden_size=cfg.hidden_size
         #         self.num_classes=cfg.num_classes
+        self.num_feature=num_feature
+        self.num_hidden=num_hidden
 
         self.mlp = nn.Sequential(
-            nn.Linear(CFG.input_feature, CFG.hidden_size),
+            nn.Linear(self.num_feature, self.num_hidden),
             nn.ReLU(),
         )
         # self.lstm1=nn.LSTM(CFG.hidden_size, CFG.hidden_size//2, dropout=0.1, batch_first=True, bidirectional=True)
         self.logits = nn.Sequential(
-            nn.Linear(CFG.hidden_size, CFG.num_classes),
+            nn.Linear(self.num_hidden, CFG.num_classes),
         )
 
     def forward(self, x):
@@ -100,5 +102,24 @@ class myscheduler():
             lr=self.decay*loss.item()
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = lr
+
+
+class GRUAutoEncoder(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.input_layer = CFG.ae_input_layer
+        self.hidden_layer = CFG.ae_hidden_layer
+        self.encoder_GRU = nn.GRU(self.input_layer, self.hidden_layer, batch_first=True)
+        self.decoder_GRU = nn.GRU(self.hidden_layer, self.input_layer, batch_first=True)
+
+
+    def forward(self, x):
+        x, h0 = self.encoder_GRU(x,
+                                 torch.zeros(1, CFG.ae_batch_size, CFG.ae_hidden_layer).to(CFG.device))
+        decoded_output, hidden = self.decoder_GRU(x,
+                                                  # h0)
+                                                  torch.zeros(1, CFG.ae_batch_size, CFG.ae_input_layer).to(CFG.device))
+
+        return decoded_output, h0
 
 

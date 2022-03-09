@@ -37,5 +37,12 @@ class CFG:
     warmup_prop=0.1
     jump_out_value=64
 
+    ## autoencoder
+    ae_batch_size=512
+    ae_input_layer=14
+    ae_hidden_layer=16
+    ae_lr=0.001
+
+
 
 #seed_everything(CFG.seed)

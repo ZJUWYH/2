@@ -1,0 +1,16 @@
+考虑autoencoder，
+
+
+考虑利用tsfresh进行特征map的提取，之后再根据相关性来进行特征的筛选，再降维balabala
+
+
+可能存在的问题
+1.existing methods: parallel time series 
+  what about nonparallel or unequal
+2.how to select feature?
+  1)ks,person
+  2)mutual entropy with feature and RUL
+
+作为benchmark的方法，就先用ks,person完成特征（from tsfresh）的筛选个屁
+
+先用lstmautoencoder试试看

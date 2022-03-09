@@ -45,6 +45,56 @@ class AircraftDataset(Dataset):
         return data
 
 
+class AircraftDataset_expend(AircraftDataset):  # 截断原有的数据集，获得海量的数据
+    def __init__(self, df, add_zero):
+        super().__init__(df)
+        self.add_zero = add_zero
+        self.cut_data()
+
+    def cut_data(self):
+        lenth = super().__len__()
+        input_signal = []
+        RUL = []
+        for unit in range(lenth):
+            unit_input = super().__getitem__(unit)["input"]
+            unit_life = super().__getitem__(unit)["lifetime"]
+            if self.add_zero:
+                for time in range(3, unit_life):
+                    input_tensor = torch.zeros(525, 14, dtype=torch.float)
+                    input_tensor[0:time] = unit_input[0:time]
+                    unit_RUL = unit_life - time
+                    input_signal.append(input_tensor)
+                    RUL.append(unit_RUL)
+            else:
+                for time in range(3, unit_life):
+                    input_tensor = unit_input[0:time]
+                    unit_RUL = unit_life - time
+                    input_signal.append(input_tensor)
+                    RUL.append(unit_RUL)
+
+        self.RUL = np.array(RUL)
+        self.input_signal = input_signal
+
+    def __len__(self):
+        return len(self.RUL)
+
+    def __getitem__(self, idx):
+        data = {
+            "input": self.input_signal[idx],
+            "RUL": torch.tensor(self.RUL[idx], dtype=torch.int64)
+        }
+
+        return data
+
+
+class AircraftDataset_expend_norul(AircraftDataset_expend): #不包含RUL，方便后续的pad操作
+    def __init__(self, df):
+        super().__init__(df, add_zero=False)
+
+    def __getitem__(self, idx):
+        return self.input_signal[idx]
+
+
 class TrainingFeature(Dataset):
     def __init__(self, G, dev_G, dev2_G, Tal0):
         self.G = G
@@ -117,7 +167,7 @@ class TestingFeature(Dataset):
         return data
 
 
-class Classified_mean_test_features(TestingFeature):
+class Classified_mean_test_features(TestingFeature):  # 分类testingdata，得到每类的均值
     def __init__(self, tG, dev_tG, dev2_tG, RUL, classifier_in):  # classifier_in为训练好的一个分类器
         super().__init__(tG, dev_tG, dev2_tG, RUL, classifier_in)
 
@@ -147,3 +197,33 @@ class Classified_mean_train_features(TrainingFeature):
             "label": torch.tensor(idx, dtype=torch.int64)
         }
         return data
+
+#####ae model
+class AircraftDataset_expend_feature_extraction(AircraftDataset_expend):
+    """
+    extraction_method为特征提取的方法，提取的特征的方法可以有很多种
+    """
+    def __init__(self, df,all_feature_list):
+        super().__init__(df, add_zero=False)
+        self.all_feature_list= all_feature_list
+
+    def __getitem__(self, idx):
+        data=super().__getitem__(idx)
+        data["input"]=self.all_feature_list[idx]
+        return data
+
+class AircraftDataset_no_expend_feature_extraction(AircraftDataset):
+    """
+    extraction_method为特征提取的方法，提取的特征的方法可以有很多种,针对的是没有扩展的数据集
+    """
+    def __init__(self, df,all_feature_list):
+        super().__init__(df)
+        self.all_feature_list= all_feature_list
+
+    def __getitem__(self, idx):
+        data=super().__getitem__(idx)
+        data["input"]=self.all_feature_list[idx]
+        return data
+
+
+
