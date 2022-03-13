@@ -39,9 +39,9 @@ class CFG:
 
     ## autoencoder
     ae_batch_size=512
-    ae_input_layer=14
-    ae_hidden_layer=16
-    ae_lr=0.001
+    ae_input_layer=6
+    ae_hidden_layer=8
+    ae_lr=0.01
 
 
 

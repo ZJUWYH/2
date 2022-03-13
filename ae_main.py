@@ -1,22 +1,25 @@
 from ae_feature_extraction import *
 
-feature_list_expend = encode_feature_extraction(train_data_expend)  # 获得切片后测试集的featurelist
-feature_list_test = encode_feature_extraction(test_dataset)  # 获得testdata的featurelist
+# feature_list_expend = encode_feature_extraction(train_data_expend)  # 获得切片后测试集的featurelist
+# feature_list_test = encode_feature_extraction(test_dataset)  # 获得testdata的featurelist
 
-train_dataset_expend_encoded = AircraftDataset_expend_feature_extraction(df_train, feature_list_expend)
+feature_list_expend = feature_preprocess(encode_feature_extraction(train_dataset_expend))  # 获得切片后测试集的featurelist_raw
+feature_list_test = feature_preprocess(encode_feature_extraction(test_dataset))  # 获得testdata的featurelist_raw
+
+train_dataset_expend_encoded = AircraftDataset_expend_feature_extraction(df_train, train_label, feature_list_expend)
 train_encoded_loader = DataLoader(
     train_dataset_expend_encoded,
     batch_size=CFG.batch_size,
     shuffle=True,
     drop_last=True,
 )
-test_dataset = AircraftDataset_no_expend_feature_extraction(df_train, feature_list_test)
+test_dataset = AircraftDataset_no_expend_feature_extraction(df_train, test_label, feature_list_test)
 test_encoded_loader = DataLoader(
     test_dataset,
     batch_size=1,
     shuffle=False)
 # classifier_in = KMeans(n_clusters=CFG.num_in_feature_classes, random_state=CFG.seed).fit(get_input(test_dataset))
-model = CustomModel(CFG.ae_hidden_layer).to(device)
+model = CustomModel(CFG.ae_hidden_layer*2).to(device)
 loss_function = CustomLoss()
 
 

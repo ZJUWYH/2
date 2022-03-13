@@ -18,7 +18,7 @@ from transformers import get_linear_schedule_with_warmup
 import random
 from config import *
 from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence, pack_sequence, pad_packed_sequence
-from DNN_model import GRUAutoEncoder, CustomModel
+from DNN_model import GRUAutoEncoder, CustomModel, LSTMAutoEncoder
 
 
 def seed_everything(seed):
@@ -103,18 +103,32 @@ def collate_fn(data):  # pad 数据
     return data
 
 
+def my_collate(batch): # pad 数据包含字典的哦
+    # batch contains a list of tuples of structure (sequence, target)
+    data = [item["input"] for item in batch]
+    data = pack_sequence(data, enforce_sorted=False)
+    targets = [item["mode"] for item in batch]
+    res = {
+        "input": data,
+        "mode": torch.vstack(targets)
+
+    }
+
+    return res
+
+
 def encode_feature_extraction(instance):
     """
     instance is a 类的实例，含有原有的时间序列数据
     return the extracted feature as a list n*num_feature
     """
-    aemodel_encode = GRUAutoEncoder()
+    aemodel_encode = LSTMAutoEncoder()
     aemodel_encode.load_state_dict(torch.load("./model_checkpoints_ae/ae/model_ae.pt", map_location="cpu"))
     all_features_list = []
     for idx in range(len(instance)):
         with torch.no_grad():
-            ae_result = aemodel_encode.encoder_GRU(instance[idx]["input"].unsqueeze(0),
-                                                   torch.zeros(1, 1, CFG.ae_hidden_layer))[0].squeeze(0)
+            ae_result = aemodel_encode.encoder1(instance[idx]["input"].unsqueeze(0))[0]#.squeeze(0)
+            ae_result=aemodel_encode.encoder2(ae_result)[0].squeeze(0)
         all_features_list.append(ae_result)
     return all_features_list
 

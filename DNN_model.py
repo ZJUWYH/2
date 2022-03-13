@@ -103,6 +103,8 @@ class myscheduler():
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = lr
 
+######aemodel
+
 
 class GRUAutoEncoder(nn.Module):
     def __init__(self):
@@ -117,9 +119,37 @@ class GRUAutoEncoder(nn.Module):
         x, h0 = self.encoder_GRU(x,
                                  torch.zeros(1, CFG.ae_batch_size, CFG.ae_hidden_layer).to(CFG.device))
         decoded_output, hidden = self.decoder_GRU(x,
-                                                  # h0)
-                                                  torch.zeros(1, CFG.ae_batch_size, CFG.ae_input_layer).to(CFG.device))
+                                                   h0)
+                                                  #torch.zeros(1, CFG.ae_batch_size, CFG.ae_input_layer).to(CFG.device))
 
         return decoded_output, h0
+
+
+class LSTMAutoEncoder(nn.Module):
+    def __init__(self, input_layer=CFG.ae_input_layer, hidden_layer=CFG.ae_hidden_layer, ae_num_class=2):
+        super().__init__()
+        self.input_layer = input_layer
+        self.hidden_layer = hidden_layer
+        self.num_class = ae_num_class
+        self.encoder1 = nn.LSTM(self.input_layer, self.hidden_layer, batch_first=True)
+        self.encoder2 = nn.LSTM(self.hidden_layer, self.hidden_layer * 2, batch_first=True)
+        self.decoder1 = nn.LSTM(self.hidden_layer * 2, self.hidden_layer, batch_first=True)
+        self.decoder2 = nn.LSTM(self.hidden_layer, self.input_layer, batch_first=True)
+        self.logits = nn.Sequential(
+            nn.Linear(self.hidden_layer * 2, self.hidden_layer),
+            nn.ReLU(),
+            nn.Linear(self.hidden_layer, self.num_class),
+            nn.LogSoftmax(dim=-1),
+        )
+
+    def forward(self, x):
+        x, (_, _) = self.encoder1(x)
+        x, (h0, _) = self.encoder2(x)
+        x, (_, _) = self.decoder1(x)
+        x, (_, _) = self.decoder2(x)
+
+        label = self.logits(h0)
+
+        return x, label
 
 
