@@ -28,7 +28,7 @@ class CFG:
     optimizer="Adam"
     scheduler="ExponentialLR"
     lr= 1e-1
-    epoches=10000
+    epoches=300
     kernel=True
     print_training_process=True
     sc_Gamma=0.999#指数型学习率衰减曲线
@@ -41,7 +41,12 @@ class CFG:
     ae_batch_size=512
     ae_input_layer=6
     ae_hidden_layer=8
-    ae_lr=0.01
+    ae_lr=0.001
+    max_len=525
+
+    ## ts
+    ts_input_dim=30
+    ts_hidden_dim=64
 
 
 

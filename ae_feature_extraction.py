@@ -35,7 +35,7 @@ device = CFG.device
 def train_ae(train_loader, RESUME=False):
     start_epoch = -1
     optimizer = getattr(torch.optim, CFG.optimizer)(aemodel.parameters(), lr=CFG.ae_lr) # 初始化优化器
-    scheduler = getattr(torch.optim.lr_scheduler, CFG.scheduler)(optimizer, gamma=CFG.sc_Gamma)  # 指数型学习率
+    #scheduler = getattr(torch.optim.lr_scheduler, CFG.scheduler)(optimizer, gamma=CFG.sc_Gamma)  # 指数型学习率
     # 初始化神经网络的参数
     for layer in aemodel.modules():
         if isinstance(layer, nn.GRU):
@@ -53,7 +53,7 @@ def train_ae(train_loader, RESUME=False):
 
             optimizer.load_state_dict(checkpoint['optimizer'])  # 加载优化器参数
             start_epoch = checkpoint['epoch']  # 设置开始的epoch
-            scheduler.load_state_dict(checkpoint['scheduler'])
+            #scheduler.load_state_dict(checkpoint['scheduler'])
 
     for epoch in range(start_epoch + 1, CFG.epoches):
         for data in train_loader:
@@ -67,7 +67,7 @@ def train_ae(train_loader, RESUME=False):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            scheduler.step()
+            #scheduler.step()
         # scheduler.step(loss,last_loss)
         # last_loss = loss
         if CFG.print_training_process and epoch % 10 == 0:
@@ -76,13 +76,13 @@ def train_ae(train_loader, RESUME=False):
                 "net": aemodel.state_dict(),
                 'optimizer': optimizer.state_dict(),
                 "epoch": epoch,
-                'scheduler': scheduler.state_dict()
+                #'scheduler': scheduler.state_dict()
             }
             if not os.path.isdir("./model_checkpoints_ae/ae"):
                 os.mkdir("./model_checkpoints_ae/ae")
             torch.save(checkpoint,
                        './model_checkpoints_ae/ae/ckpt.pth')
-        if loss.mean() < 0.05:
+        if loss.mean() < 0.081:
             save_model_weights(aemodel, "model_ae.pt",
                                cp_folder="./model_checkpoints_ae/ae")
             break
