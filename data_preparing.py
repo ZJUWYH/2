@@ -116,7 +116,9 @@ class AircraftDataset_expend(AircraftDataset):  # 截断原有的数据集，获
     def __init__(self, df,labels,add_zero):
         super().__init__(df,labels)
         self.add_zero = add_zero
+        self.feature = CFG.ae_input_layer
         self.cut_data()
+
 
     def cut_data(self):
         lenth = super().__len__()
@@ -128,15 +130,15 @@ class AircraftDataset_expend(AircraftDataset):  # 截断原有的数据集，获
             unit_label=super().__getitem__(unit)["mode"]
             unit_life = len(unit_input)
             if self.add_zero:
-                for time in range(3, unit_life):
-                    input_tensor = torch.zeros(525, 14, dtype=torch.float)
+                for time in range(7, unit_life):
+                    input_tensor = torch.zeros(525, self.feature, dtype=torch.float)
                     input_tensor[0:time] = unit_input[0:time]
                     unit_RUL = unit_life - time
                     input_signal.append(input_tensor)
                     RUL.append(unit_RUL)
                     label.append(unit_label)
             else:
-                for time in range(3, unit_life):
+                for time in range(7, unit_life):
                     input_tensor = unit_input[0:time]
                     unit_RUL = unit_life - time
                     input_signal.append(input_tensor)
@@ -153,6 +155,7 @@ class AircraftDataset_expend(AircraftDataset):  # 截断原有的数据集，获
     def __getitem__(self, idx):
         data = {
             "input": self.input_signal[idx],
+            "lifetime": len(self.input_signal[idx]),
             "RUL": torch.tensor(self.RUL[idx], dtype=torch.int64),
             "mode":self.all_labels[idx]
         }
@@ -278,8 +281,8 @@ class AircraftDataset_expend_feature_extraction(AircraftDataset_expend):
     输入为feature list
     """
 
-    def __init__(self, df, labels, all_feature_list):
-        super().__init__(df, labels,add_zero=False)
+    def __init__(self, df, labels, all_feature_list,add_zero):
+        super().__init__(df, labels,add_zero)
         self.all_feature_list = all_feature_list
 
     def __getitem__(self, idx):

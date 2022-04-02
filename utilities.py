@@ -18,7 +18,26 @@ from transformers import get_linear_schedule_with_warmup
 import random
 from config import *
 from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence, pack_sequence, pad_packed_sequence
-from DNN_model import GRUAutoEncoder, CustomModel, LSTMAutoEncoder
+# from DNN_model import GRUAutoEncoder, CustomModel, LSTMAutoEncoder
+import json
+import copy
+import math
+
+
+def clones(module, N):
+    "生成n个相同的层"
+    return nn.ModuleList([copy.deepcopy(module) for _ in range(N)])
+
+
+def save_dict(pet, filename):
+    with open(filename, 'w') as f:
+        f.write(json.dumps(pet))
+
+
+def load_dict(filename):
+    with open(filename) as f:
+        pet = json.loads(f.read())
+    return pet
 
 
 def seed_everything(seed):
@@ -35,6 +54,22 @@ def seed_everything(seed):
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+
+def set_seed(seed):
+    try:
+        import torch
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
+            torch.backends.cudnn.deterministic = True
+            torch.backends.cudnn.benchmark = False
+    except Exception as e:
+        print("Set seed failed,details are ",e)
+        pass
+    import numpy as np
+    np.random.seed(seed)
+    import random as python_random
+    python_random.seed(seed)
 
 
 import torch.nn as nn
@@ -103,7 +138,7 @@ def collate_fn(data):  # pad 数据
     return data
 
 
-def my_collate(batch): # pad 数据包含字典的哦
+def my_collate(batch):  # pad 数据包含字典的哦
     # batch contains a list of tuples of structure (sequence, target)
     data = [item["input"] for item in batch]
     data = pack_sequence(data, enforce_sorted=False)
@@ -127,8 +162,8 @@ def encode_feature_extraction(instance):
     all_features_list = []
     for idx in range(len(instance)):
         with torch.no_grad():
-            ae_result = aemodel_encode.encoder1(instance[idx]["input"].unsqueeze(0))[0]#.squeeze(0)
-            ae_result=aemodel_encode.encoder2(ae_result)[0].squeeze(0)
+            ae_result = aemodel_encode.encoder1(instance[idx]["input"].unsqueeze(0))[0]  # .squeeze(0)
+            ae_result = aemodel_encode.encoder2(ae_result)[1][0].squeeze()
         all_features_list.append(ae_result)
     return all_features_list
 
@@ -163,3 +198,44 @@ def get_input(instance):
     for idx in range(lenth):
         input.append(instance[idx]["input"].numpy())
     return np.array(input)
+
+##tsfresh
+def get_dataframe_ofcuttedsequence(instance,idx):#instance is from AircraftDataset_expend
+    """
+    :param instance:
+    :param idx:
+    :return: a dataframe of ctuued sequence
+    """
+    testarray=np.array(instance[idx]["input"],dtype=np.float64)
+    testdataframe=pd.DataFrame(testarray,columns=['T24','T30','T50','P30','Ps30','phi'])
+    testdataframe["Unit"]=idx+1
+    testdataframe=Preprocessing.add_timeseries(testdataframe)
+    return testdataframe
+
+def get_Accuracy(hat_RUL, RUL_true, lifetime_list):
+    """
+
+    :return: RUL升序排序后前20个，前40个，前**个的误差
+    """
+    # hat_RUL = get_RUL(mu_Gamma, C_Gamma, sigma_2, w, data, data_train)
+    # RUL_frame = pd.read_csv(path, header=None)
+    # RUL = RUL_frame.values[:, 0]
+    Accuracy = np.zeros((100, 2))
+    Accuracy[:, 0] = RUL_true
+    Accuracy[:, 1] = abs(hat_RUL - RUL_true) / (lifetime_list + RUL_true)
+    num_A = np.argsort(Accuracy[:, 0])
+    iAccuracy = np.zeros((100, 2))
+    for ia in range(0, 100):
+        iAccuracy[ia, 0] = Accuracy[int(num_A[ia]), 0]
+        iAccuracy[ia, 1] = Accuracy[int(num_A[ia]), 1]
+    rul0 = [25, 50, 75, 100, 125, 300]
+    Accuracy_RUL = np.mat(np.zeros((6, 3)))
+    for ir in range(0, 6):
+        Accuracy_RUL[ir, 0] = int(rul0[ir])
+        num_rul = np.argwhere((iAccuracy[:, 0] <= rul0[ir]))
+        #(cycletime_sim_raw > 50) & (cycletime_sim_raw < 350)
+        Accuracy_RUL[ir, 1] = np.mean(iAccuracy[num_rul[:, 0], 1])
+        s_error = np.std(iAccuracy[num_rul[:, 0], 1])/math.sqrt(len(num_rul))
+        Accuracy_RUL[ir, 2] = s_error
+    Accuracy_RUL[5, 0] = 150
+    return Accuracy_RUL

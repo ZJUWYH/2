@@ -1,12 +1,12 @@
 from ae_feature_extraction import *
 
-# feature_list_expend = encode_feature_extraction(train_data_expend)  # 获得切片后测试集的featurelist
-# feature_list_test = encode_feature_extraction(test_dataset)  # 获得testdata的featurelist
+feature_list_expend = encode_feature_extraction(train_dataset_expend)  # 获得切片后测试集的featurelist
+feature_list_test = encode_feature_extraction(test_dataset)  # 获得testdata的featurelist
 
-feature_list_expend = feature_preprocess(encode_feature_extraction(train_dataset_expend))  # 获得切片后测试集的featurelist_raw
-feature_list_test = feature_preprocess(encode_feature_extraction(test_dataset))  # 获得testdata的featurelist_raw
+# feature_list_expend = feature_preprocess(encode_feature_extraction(train_dataset_expend))  # 获得切片后测试集的featurelist_raw
+# feature_list_test = feature_preprocess(encode_feature_extraction(test_dataset))  # 获得testdata的featurelist_raw
 
-train_dataset_expend_encoded = AircraftDataset_expend_feature_extraction(df_train, train_label, feature_list_expend)
+train_dataset_expend_encoded = AircraftDataset_expend_feature_extraction(df_train, train_label, feature_list_expend,True)
 train_encoded_loader = DataLoader(
     train_dataset_expend_encoded,
     batch_size=CFG.batch_size,
