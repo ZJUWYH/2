@@ -44,9 +44,10 @@ from sklearn.cluster import KMeans
 #
 #         return data
 class AircraftDataset(Dataset):
-    def __init__(self, df, labels):# df is a dataframe and label is an array indicate the true failure mode
+    def __init__(self, df, labels,columns = ['T24','T30','T50','P30','Ps30','phi']):# df is a dataframe and label is an array indicate the true failure mode
         self.df = df.groupby("Unit").agg(list).reset_index()
         self.labels=labels
+        self.columns = columns
 
     def __len__(self):
         return self.df.shape[0]
@@ -55,7 +56,7 @@ class AircraftDataset(Dataset):
         data = {}
 #         sensor = ['T24', 'T30', 'T50', 'P30', 'Nf', 'Nc', 'Ps30',
 #                   'phi', 'NRf', 'NRc', 'BPR', 'htBleed', 'W31', 'W32']
-        sensor=['T24','T30','T50','P30','Ps30','phi']
+        sensor = self.columns
         multi_sensor = []
         for sensor_name in sensor:
             multi_sensor.append(np.array(self.df[sensor_name].values.tolist()[idx]))
@@ -113,8 +114,8 @@ class AircraftDataset(Dataset):
 #
 #         return data
 class AircraftDataset_expend(AircraftDataset):  # 截断原有的数据集，获得海量的数据
-    def __init__(self, df,labels,add_zero):
-        super().__init__(df,labels)
+    def __init__(self, df,labels,add_zero,columns = ['T24','T30','T50','P30','Ps30','phi']):
+        super().__init__(df,labels,columns)
         self.add_zero = add_zero
         self.feature = CFG.ae_input_layer
         self.cut_data()
@@ -130,7 +131,7 @@ class AircraftDataset_expend(AircraftDataset):  # 截断原有的数据集，获
             unit_label=super().__getitem__(unit)["mode"]
             unit_life = len(unit_input)
             if self.add_zero:
-                for time in range(7, unit_life):
+                for time in range(50, unit_life):
                     input_tensor = torch.zeros(525, self.feature, dtype=torch.float)
                     input_tensor[0:time] = unit_input[0:time]
                     unit_RUL = unit_life - time
@@ -138,7 +139,7 @@ class AircraftDataset_expend(AircraftDataset):  # 截断原有的数据集，获
                     RUL.append(unit_RUL)
                     label.append(unit_label)
             else:
-                for time in range(7, unit_life):
+                for time in range(50, unit_life):
                     input_tensor = unit_input[0:time]
                     unit_RUL = unit_life - time
                     input_signal.append(input_tensor)
@@ -281,8 +282,8 @@ class AircraftDataset_expend_feature_extraction(AircraftDataset_expend):
     输入为feature list
     """
 
-    def __init__(self, df, labels, all_feature_list,add_zero):
-        super().__init__(df, labels,add_zero)
+    def __init__(self, df, labels, all_feature_list,add_zero,columns = ['T24','T30','T50','P30','Ps30','phi']):
+        super().__init__(df, labels,add_zero,columns)
         self.all_feature_list = all_feature_list
 
     def __getitem__(self, idx):
@@ -296,8 +297,8 @@ class AircraftDataset_no_expend_feature_extraction(AircraftDataset):
     输入为feature list,针对的是没有扩展的数据集
     """
 
-    def __init__(self, df, labels,all_feature_list):
-        super().__init__(df,labels)
+    def __init__(self, df, labels,all_feature_list,columns = ['T24','T30','T50','P30','Ps30','phi']):
+        super().__init__(df,labels,columns)
         self.all_feature_list = all_feature_list
 
     def __getitem__(self, idx):
