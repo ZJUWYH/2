@@ -1,0 +1,1 @@
+考虑condition？ mmd problem：算法的time consuming，到底需不需要事先zscore
